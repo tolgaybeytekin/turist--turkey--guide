@@ -1,322 +1,493 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>Turist – Turkey Travel Guide & Interactive Map (25+ Destinations)</title>
-<meta name="description" content="Explore 25+ top destinations across Turkey with an interactive map, city and category filters, best visiting seasons, budget tags, and English/Turkish support.">
-<meta name="keywords" content="Turkey travel guide, Turist, Istanbul attractions, Cappadocia, Antalya beaches, Turkey map, places to visit in Turkey">
-<meta name="robots" content="index, follow">
-<meta property="og:title" content="Turist – Turkey Travel Guide & Interactive Map">
-<meta property="og:description" content="Explore 25+ top destinations across Turkey with an interactive map, city and category filters, best visiting seasons, budget tags, and English/Turkish support.">
-<meta property="og:type" content="website">
-<meta property="og:locale" content="en_US">
-<meta property="og:locale:alternate" content="tr_TR">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Turist – Turkey Travel Guide & Interactive Map">
-<meta name="twitter:description" content="Explore 25+ top destinations across Turkey with an interactive map, city and category filters, best visiting seasons, budget tags, and English/Turkish support.">
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "WebApplication",
-  "name": "Turist",
-  "applicationCategory": "TravelGuide",
-  "operatingSystem": "Web",
-  "description": "An interactive Turkey travel guide covering Istanbul, Cappadocia, Antalya, Izmir, Pamukkale, and more.",
-  "about": {
-    "@type": "Country",
-    "name": "Turkey"
-  },
-  "areaServed": "Turkey"
-}
-</script>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<style>
-:root { --bg:#0b1220; --panel:#131c31; --accent:#38bdf8; --text:#e2e8f0; --muted:#94a3b8; --border:#1f2a44; --card:#18233f; --success:#22c55e; }
-* { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
-html,body { background:var(--bg); color:var(--text); font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif; min-height:100vh; padding-top:env(safe-area-inset-top); padding-bottom:env(safe-area-inset-bottom); }
-.wrap { max-width:760px; margin:0 auto; padding:12px; }
-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; gap:8px; }
-h1 { color:var(--accent); font-size:1.4rem; font-weight:800; }
-.lang-btn { background:var(--panel); border:1px solid var(--border); color:var(--text); padding:6px 12px; border-radius:8px; cursor:pointer; font-size:.85rem; }
-.offline-banner { background:#7f1d1d; color:#fecaca; padding:8px; border-radius:8px; font-size:.8rem; margin:8px 0; display:none; }
-.filters { display:flex; gap:8px; flex-wrap:wrap; margin:8px 0; }
-.filters input, .filters select { flex:1; min-width:120px; background:var(--panel); color:var(--text); border:1px solid var(--border); border-radius:8px; padding:9px; font-size:.9rem; }
-.chips { display:flex; gap:6px; flex-wrap:wrap; margin:8px 0; }
-.chip { background:var(--panel); border:1px solid var(--border); color:var(--text); padding:6px 12px; border-radius:999px; font-size:.8rem; cursor:pointer; }
-.chip.active { background:var(--accent); color:#0b1220; border-color:var(--accent); }
-#map { height:340px; border-radius:12px; overflow:hidden; margin:10px 0; border:1px solid var(--border); }
-.cards { display:grid; grid-template-columns:1fr; gap:10px; }
-.card { background:var(--card); border:1px solid var(--border); border-radius:12px; overflow:hidden; cursor:pointer; transition:transform .15s; }
-.card:active { transform:scale(.98); }
-.card img { width:100%; height:170px; object-fit:cover; background:#1f2a44; }
-.card-body { padding:10px; }
-.card-title { color:var(--accent); font-weight:700; font-size:1.05rem; }
-.card-meta { color:var(--muted); font-size:.8rem; margin:4px 0; }
-.card-desc { font-size:.9rem; margin:6px 0; line-height:1.4; }
-.tag { display:inline-block; background:rgba(56,189,248,.12); border:1px solid rgba(56,189,248,.3); color:var(--accent); padding:2px 8px; border-radius:999px; font-size:.7rem; margin-right:4px; }
-.budget { display:inline-block; padding:2px 8px; border-radius:999px; font-size:.7rem; font-weight:700; }
-.budget.low { background:rgba(34,197,94,.15); color:#4ade80; border:1px solid rgba(34,197,94,.3); }
-.budget.mid { background:rgba(250,204,21,.15); color:#facc15; border:1px solid rgba(250,204,21,.3); }
-.budget.high { background:rgba(239,68,68,.15); color:#f87171; border:1px solid rgba(239,68,68,.3); }
-.detail { position:fixed; inset:0; background:rgba(0,0,0,.75); display:none; align-items:center; justify-content:center; z-index:1000; padding:12px; backdrop-filter:blur(4px); }
-.detail-box { background:var(--panel); border:1px solid var(--border); border-radius:14px; max-width:560px; width:100%; max-height:92vh; overflow:auto; padding:14px; }
-.detail-box img { width:100%; height:220px; object-fit:cover; border-radius:10px; margin-bottom:8px; background:#1f2a44; }
-.detail-title { color:var(--accent); font-size:1.3rem; font-weight:700; margin-bottom:4px; }
-.detail-row { margin:6px 0; font-size:.9rem; line-height:1.4; }
-.detail-row b { color:var(--muted); }
-.btn { display:inline-block; background:var(--accent); color:#0b1220; padding:9px 14px; border-radius:8px; text-decoration:none; font-weight:700; font-size:.85rem; margin-top:8px; margin-right:6px; border:none; cursor:pointer; }
-.btn.secondary { background:var(--panel); color:var(--text); border:1px solid var(--border); }
-.close-btn { float:right; background:var(--bg); color:var(--text); border:1px solid var(--border); border-radius:8px; padding:4px 10px; cursor:pointer; }
-.empty { text-align:center; color:var(--muted); padding:24px; }
-@media (min-width:600px){ .cards { grid-template-columns:1fr 1fr; } }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>2D Game Assets & Sprites Generator</title>
+  <!-- ADSTERRA_HEAD_SCRIPT -->
+  <style>
+    :root {
+      --bg: #0d1117;
+      --panel: #161b22;
+      --panel-2: #1f2630;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --accent: #38bdf8;
+      --accent-2: #a855f7;
+      --ok: #22c55e;
+      --warn: #f59e0b;
+      --border: #30363d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.45;
+    }
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 20px;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+    }
+    .brand { font-size: 1.15rem; font-weight: 700; }
+    .credits-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .badge {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+    button {
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      color: var(--text);
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    button:hover { border-color: var(--accent); }
+    button.primary { background: var(--accent); color: #061018; border-color: var(--accent); }
+    button.secondary { background: var(--accent-2); color: #fff; border-color: var(--accent-2); }
+    button.success { background: var(--ok); color: #051309; border-color: var(--ok); }
+    .ad-slot {
+      max-width: 1120px;
+      margin: 14px auto;
+      padding: 10px;
+      min-height: 72px;
+      background: var(--panel);
+      border: 1px dashed var(--border);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+    main {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 0 16px 24px;
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 18px;
+    }
+    @media (max-width: 860px) { main { grid-template-columns: 1fr; } }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+    }
+    .field { margin-bottom: 12px; }
+    .field label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 5px; }
+    select, input[type="color"], input[type="text"] {
+      width: 100%;
+      background: var(--panel-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 0.9rem;
+    }
+    input[type="color"] { height: 38px; padding: 3px; }
+    .color-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .btn-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .preview-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 340px;
+      background: repeating-conic-gradient(#1b222c 0% 25%, #12171e 0% 50%) 50% / 24px 24px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+    }
+    canvas#spriteCanvas {
+      width: 256px;
+      height: 256px;
+      image-rendering: pixelated;
+      border-radius: 6px;
+    }
+    .frames-strip {
+      display: flex;
+      gap: 10px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .frames-strip canvas {
+      width: 64px;
+      height: 64px;
+      image-rendering: pixelated;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+    }
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.72);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 50;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal {
+      width: 100%;
+      max-width: 480px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+    }
+    .wallet-box {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px;
+      font-family: monospace;
+      font-size: 0.82rem;
+      word-break: break-all;
+      margin: 8px 0;
+    }
+    .warn { color: var(--warn); font-size: 0.82rem; }
+    .status-msg { margin-top: 8px; font-size: 0.85rem; color: var(--ok); min-height: 20px; }
+  </style>
 </head>
 <body>
-<main class="wrap">
   <header>
-    <h1 id="title">Turist</h1>
-    <button class="lang-btn" id="langBtn" onclick="toggleLang()">EN</button>
+    <div class="brand">2D Game Assets &amp; Sprites Generator</div>
+    <div class="credits-bar">
+      <span class="badge">Tries Left: <span id="triesCount">5</span></span>
+      <button type="button" class="secondary" id="openAdModalBtn">Watch Ad (+2 Tries)</button>
+      <button type="button" class="primary" id="openBuyModalBtn">Buy Tries (2 USDT BEP-20)</button>
+    </div>
   </header>
-  <div id="offlineBanner" class="offline-banner"></div>
-  <div class="filters">
-    <input id="search" type="search" placeholder="Ara..." aria-label="Search destinations" />
-    <select id="cityFilter" aria-label="Filter by city"><option value="">Tüm Şehirler</option></select>
-    <select id="catFilter" aria-label="Filter by category"><option value="">Tüm Kategoriler</option></select>
+
+  <div class="ad-slot" id="adsterra-top-banner">
+    <!-- ADSTERRA_TOP_BANNER -->
+    Adsterra Top Banner Slot
   </div>
-  <div class="chips" id="chips"></div>
-  <div id="map"></div>
-  <div class="cards" id="cards"></div>
-</main>
 
-<div class="detail" id="detail">
-  <div class="detail-box" id="detailBox"></div>
-</div>
+  <main>
+    <section class="card">
+      <div class="field">
+        <label for="assetMode">Asset / Sprite Mode</label>
+        <select id="assetMode">
+          <option value="character">2D Character / Enemy Sprite</option>
+          <option value="tile">Tile / Terrain Block</option>
+          <option value="collectible">Collectible / Coin / Gem</option>
+          <option value="icon">UI Icon / Item</option>
+        </select>
+      </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
-const I18N = {
-  tr: {
-    title: "Turist",
-    search: "Ara...",
-    allCities: "Tüm Şehirler",
-    allCats: "Tüm Kategoriler",
-    bestTime: "En iyi sezon",
-    tips: "İpuçları",
-    budget: "Bütçe",
-    highlights: "Öne Çıkanlar",
-    openMaps: "Google Maps'te Aç",
-    coords: "Koordinatlar",
-    offline: "Çevrimdışı mod: veriler yerel olarak yüklendi.",
-    cats: { historical:"Tarihi", nature:"Doğa", beach:"Plaj", culture:"Kültür/Yemek" },
-    cities: { istanbul:"İstanbul", cappadocia:"Kapadokya", antalya:"Antalya", izmir:"İzmir/Efes", pamukkale:"Pamukkale", bursa:"Bursa", trabzon:"Trabzon", mardin:"Mardin", fethiye:"Fethiye", ankara:"Ankara", konya:"Konya" },
-    budgetLabels: { low:"Düşük", mid:"Orta", high:"Yüksek" }
-  },
-  en: {
-    title: "Turist",
-    search: "Search...",
-    allCities: "All Cities",
-    allCats: "All Categories",
-    bestTime: "Best season",
-    tips: "Tips",
-    budget: "Budget",
-    highlights: "Highlights",
-    openMaps: "Open in Google Maps",
-    coords: "Coordinates",
-    offline: "Offline mode: data loaded locally.",
-    cats: { historical:"Historical", nature:"Nature", beach:"Beaches", culture:"Culture/Food" },
-    cities: { istanbul:"Istanbul", cappadocia:"Cappadocia", antalya:"Antalya", izmir:"Izmir/Ephesus", pamukkale:"Pamukkale", bursa:"Bursa", trabzon:"Trabzon", mardin:"Mardin", fethiye:"Fethiye", ankara:"Ankara", konya:"Konya" },
-    budgetLabels: { low:"Low", mid:"Mid", high:"High" }
-  }
-};
+      <div class="field">
+        <label for="styleTheme">Style Theme</label>
+        <select id="styleTheme">
+          <option value="pixel">Pixel Art Grid</option>
+          <option value="vector">Flat Vector</option>
+          <option value="neon">Neon Sci-Fi</option>
+          <option value="fantasy">Fantasy</option>
+        </select>
+      </div>
 
-// Force English on first launch unless user explicitly switched language before.
-const __langSet = localStorage.getItem("ttg_lang_set");
-let lang = (__langSet === "1") ? (localStorage.getItem("ttg_lang") || "en") : "en";
-function t(key){ return I18N[lang][key]; }
+      <div class="field">
+        <label for="gridSize">Grid / Resolution</label>
+        <select id="gridSize">
+          <option value="16">16 x 16</option>
+          <option value="24" selected>24 x 24</option>
+          <option value="32">32 x 32</option>
+        </select>
+      </div>
 
-const PLACES = [
-  { id:1, city:"istanbul", cat:"historical", name:{tr:"Ayasofya",en:"Hagia Sophia"}, lat:41.0086, lng:28.9802, best:{tr:"İlkbahar/Sonbahar",en:"Spring/Autumn"}, tips:{tr:"Erken git, kuyruk uzun. Ayakkabı çıkarılmalı.",en:"Go early; long queues. Remove shoes."}, highlights:{tr:"Bizans mozaikleri, dev kubbe",en:"Byzantine mosaics, giant dome"}, budget:"low", desc:{tr:"Bizans bazilikası, cami ve müze. UNESCO Dünya Mirası.",en:"Byzantine basilica, mosque and museum. UNESCO."}, img:"https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Hagia_Sophia_Mars_2013.jpg/640px-Hagia_Sophia_Mars_2013.jpg" },
-  { id:2, city:"istanbul", cat:"historical", name:{tr:"Topkapı Sarayı",en:"Topkapi Palace"}, lat:41.0115, lng:28.9833, best:{tr:"İlkbahar",en:"Spring"}, tips:{tr:"Harem bölümü ekstra bilet, su alın.",en:"Harem section extra ticket; bring water."}, highlights:{tr:"Hazine dairesi, Harem",en:"Treasury, Harem"}, budget:"mid", desc:{tr:"Osmanlı imparatorluk sarayı ve müzesi.",en:"Ottoman imperial palace and museum."}, img:"https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Topkapi_Palace.jpg/640px-Topkapi_Palace.jpg" },
-  { id:3, city:"istanbul", cat:"historical", name:{tr:"Sultanahmet Camii",en:"Blue Mosque"}, lat:41.0054, lng:28.9768, best:{tr:"Tüm yıl",en:"All year"}, tips:{tr:"Namaz saatlerinde kapalı; başörtüsü.",en:"Closed during prayers; headscarf."}, highlights:{tr:"Mavi İznik çinileri",en:"Blue Iznik tiles"}, budget:"low", desc:{tr:"Sultan Ahmed Camii, altı minareli.",en:"Sultan Ahmed Mosque, six minarets."}, img:"https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Sultan_Ahmed_Mosque_Istanbul_Turkey.jpg/640px-Sultan_Ahmed_Mosque_Istanbul_Turkey.jpg" },
-  { id:4, city:"istanbul", cat:"culture", name:{tr:"Kapalıçarşı",en:"Grand Bazaar"}, lat:41.0107, lng:28.9681, best:{tr:"Hafta içi",en:"Weekdays"}, tips:{tr:"Pazarlık yapın, çay ikramı.",en:"Bargain; enjoy tea."}, highlights:{tr:"4000+ dükkan, halı, takı",en:"4000+ shops, rugs, jewelry"}, budget:"mid", desc:{tr:"Dünyanın en eski kapalı çarşılarından.",en:"One of the oldest covered markets."}, img:"https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Grand_Bazaar_Istanbul.jpg/640px-Grand_Bazaar_Istanbul.jpg" },
-  { id:5, city:"istanbul", cat:"culture", name:{tr:"Galata Kulesi",en:"Galata Tower"}, lat:41.0256, lng:28.9744, best:{tr:"Gün batımı",en:"Sunset"}, tips:{tr:"Bilet online alın, kuyruk uzun.",en:"Buy tickets online; long queues."}, highlights:{tr:"360° İstanbul panoraması",en:"360° Istanbul panorama"}, budget:"mid", desc:{tr:"İstanbul panoraması ve tarihi kule.",en:"Istanbul panorama and historic tower."}, img:"https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Galata_Tower.jpg/640px-Galata_Tower.jpg" },
-  { id:6, city:"istanbul", cat:"culture", name:{tr:"Boğaz Turu",en:"Bosphorus Cruise"}, lat:41.0400, lng:29.0000, best:{tr:"Yaz",en:"Summer"}, tips:{tr:"HOP ON-HOP OFF vapur.",en:"HOHO ferry."}, highlights:{tr:"Köprüler, yalılar, kaleler",en:"Bridges, mansions, castles"}, budget:"mid", desc:{tr:"Boğaz'da tekne turu.",en:"Boat tour on the Bosphorus."}, img:"https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Bosphorus_Cruise.jpg/640px-Bosphorus_Cruise.jpg" },
-  { id:7, city:"cappadocia", cat:"historical", name:{tr:"Göreme Açık Hava Müzesi",en:"Göreme Open-Air Museum"}, lat:38.6431, lng:34.8300, best:{tr:"İlkbahar/Sonbahar",en:"Spring/Autumn"}, tips:{tr:"Sabah erken gidin.",en:"Go early morning."}, highlights:{tr:"Kaya oyma kiliseler, freskler",en:"Rock-cut churches, frescoes"}, budget:"mid", desc:{tr:"Kaya oyma kiliseler ve manastırlar. UNESCO.",en:"Rock-cut churches and monasteries. UNESCO."}, img:"https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Goreme_Open_Air_Museum.jpg/640px-Goreme_Open_Air_Museum.jpg" },
-  { id:8, city:"cappadocia", cat:"nature", name:{tr:"Peri Bacaları (Paşabağ)",en:"Fairy Chimneys"}, lat:38.6667, lng:34.8500, best:{tr:"Gün doğumu",en:"Sunrise"}, tips:{tr:"Fotoğraf için en iyi ışık.",en:"Best light for photos."}, highlights:{tr:"Mantar şeklinde kaya oluşumları",en:"Mushroom-shaped formations"}, budget:"low", desc:{tr:"Kapadokya'nın simgesi peri bacaları.",en:"Iconic fairy chimneys of Cappadocia."}, img:"https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Fairy_Chimneys_Cappadocia.jpg/640px-Fairy_Chimneys_Cappadocia.jpg" },
-  { id:9, city:"cappadocia", cat:"adventure", name:{tr:"Sıcak Hava Balonu",en:"Hot Air Balloon"}, lat:38.6431, lng:34.8300, best:{tr:"Gün doğumu",en:"Sunrise"}, tips:{tr:"Hava durumuna bağlı, rezervasyon şart.",en:"Weather dependent, book ahead."}, highlights:{tr:"Vadiler üzerinde balon turu",en:"Balloon flight over valleys"}, budget:"high", desc:{tr:"Kapadokya vadileri üzerinde balon turu.",en:"Balloon flight over Cappadocia valleys."}, img:"https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/Hot_air_balloon_Cappadocia.jpg/640px-Hot_air_balloon_Cappadocia.jpg" },
-  { id:10, city:"antalya", cat:"historical", name:{tr:"Kaleiçi",en:"Antalya Old Town"}, lat:36.8850, lng:30.7030, best:{tr:"İlkbahar/Sonbahar",en:"Spring/Autumn"}, tips:{tr:"Akşam yürüyüşü, restoranlar.",en:"Evening stroll, restaurants."}, highlights:{tr:"Roma limanı, Osmanlı evleri",en:"Roman harbor, Ottoman houses"}, budget:"mid", desc:{tr:"Antalya'nın tarihi merkezi.",en:"Historic center of Antalya."}, img:"https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Kaleici_Antalya.jpg/640px-Kaleici_Antalya.jpg" },
-  { id:11, city:"antalya", cat:"historical", name:{tr:"Aspendos Tiyatrosu",en:"Aspendos Theater"}, lat:36.9390, lng:31.1730, best:{tr:"Yaz",en:"Summer"}, tips:{tr:"Akustik deneyin.",en:"Test acoustics."}, highlights:{tr:"En iyi korunmuş Roma tiyatrosu",en:"Best-preserved Roman theater"}, budget:"low", desc:{tr:"Antik Roma tiyatrosu.",en:"Ancient Roman theater."}, img:"https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Aspendos_Theatre.jpg/640px-Aspendos_Theatre.jpg" },
-  { id:12, city:"antalya", cat:"beach", name:{tr:"Kaputaş Plajı",en:"Kaputaş Beach"}, lat:36.2856, lng:29.4647, best:{tr:"Yaz",en:"Summer"}, tips:{tr:"Merdivenler dik, erken gidin.",en:"Steep stairs; go early."}, highlights:{tr:"Turkuaz koy, kayalıklar",en:"Turquoise cove, cliffs"}, budget:"low", desc:{tr:"İki kayalık arasında turkuaz koy.",en:"Turquoise cove between cliffs."}, img:"https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Kaputas_Beach.jpg/640px-Kaputas_Beach.jpg" },
-  { id:13, city:"antalya", cat:"beach", name:{tr:"Lara Plajı",en:"Lara Beach"}, lat:36.8500, lng:30.8500, best:{tr:"Yaz",en:"Summer"}, tips:{tr:"Şezlong kiralayın.",en:"Rent sunbeds."}, highlights:{tr:"Uzun kumlu plaj",en:"Long sandy beach"}, budget:"mid", desc:{tr:"Antalya'nın ünlü kumlu plajı.",en:"Antalya's famous sandy beach."}, img:"https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/Lara_Beach.jpg/640px-Lara_Beach.jpg" },
-  { id:14, city:"izmir", cat:"historical", name:{tr:"Efes",en:"Ephesus"}, lat:37.9395, lng:27.3415, best:{tr:"İlkbahar/Sonbahar",en:"Spring/Autumn"}, tips:{tr:"Güneş kremi, su, şapka.",en:"Sunscreen, water, hat."}, highlights:{tr:"Celsus Kütüphanesi, tiyatro",en:"Celsus Library, theater"}, budget:"mid", desc:{tr:"Antik Yunan/Roma kenti. UNESCO.",en:"Ancient Greek/Roman city. UNESCO."}, img:"https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Ephesus_Library.jpg/640px-Ephesus_Library.jpg" },
-  { id:15, city:"izmir", cat:"culture", name:{tr:"Şirince",en:"Şirince Village"}, lat:37.9400, lng:27.4300, best:{tr:"Sonbahar",en:"Autumn"}, tips:{tr:"Şarap tadımı yapın.",en:"Try wine tasting."}, highlights:{tr:"Tarihi köy, şarap",en:"Historic village, wine"}, budget:"low", desc:{tr:"Tarihi köy ve şarapları.",en:"Historic village and wines."}, img:"https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Sirince.jpg/640px-Sirince.jpg" },
-  { id:16, city:"pamukkale", cat:"nature", name:{tr:"Pamukkale",en:"Pamukkale"}, lat:37.9200, lng:29.1200, best:{tr:"İlkbahar",en:"Spring"}, tips:{tr:"Çıplak ayakla yürüyün.",en:"Walk barefoot."}, highlights:{tr:"Beyaz traverten teraslar",en:"White travertine terraces"}, budget:"mid", desc:{tr:"Beyaz traverten teraslar. UNESCO.",en:"White travertine terraces. UNESCO."}, img:"https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/Pamukkale.jpg/640px-Pamukkale.jpg" },
-  { id:17, city:"bursa", cat:"historical", name:{tr:"Uludağ",en:"Uludağ"}, lat:40.0700, lng:29.2300, best:{tr:"Kış",en:"Winter"}, tips:{tr:"Kayak ekipmanı kiralayın.",en:"Rent ski gear."}, highlights:{tr:"Kayak merkezi, milli park",en:"Ski resort, national park"}, budget:"mid", desc:{tr:"Kayak merkezi ve milli park.",en:"Ski resort and national park."}, img:"https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Uludag.jpg/640px-Uludag.jpg" },
-  { id:18, city:"trabzon", cat:"historical", name:{tr:"Sümela Manastırı",en:"Sümela Monastery"}, lat:40.6900, lng:39.6560, best:{tr:"Yaz",en:"Summer"}, tips:{tr:"Yürüyüş yolu dik.",en:"Steep path."}, highlights:{tr:"Kayalıkta Bizans manastırı",en:"Cliffside Byzantine monastery"}, budget:"low", desc:{tr:"Kayalıkta Bizans manastırı.",en:"Cliffside Byzantine monastery."}, img:"https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Sumela_Monastery.jpg/640px-Sumela_Monastery.jpg" },
-  { id:19, city:"trabzon", cat:"nature", name:{tr:"Uzungöl",en:"Uzungöl"}, lat:40.6190, lng:40.2940, best:{tr:"Yaz",en:"Summer"}, tips:{tr:"Sabah sis fotoğrafı.",en:"Morning fog photos."}, highlights:{tr:"Göl ve dağ manzarası",en:"Lake and mountain scenery"}, budget:"low", desc:{tr:"Göl ve dağ manzarası.",en:"Lake and mountain scenery."}, img:"https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Uzungol.jpg/640px-Uzungol.jpg" },
-  { id:20, city:"mardin", cat:"historical", name:{tr:"Mardin Eski Şehir",en:"Mardin Old City"}, lat:37.3100, lng:40.7360, best:{tr:"İlkbahar/Sonbahar",en:"Spring/Autumn"}, tips:{tr:"Dar sokaklar, taş evler.",en:"Narrow streets, stone houses."}, highlights:{tr:"Taş evler, panoramic manzara",en:"Stone houses, panoramic views"}, budget:"low", desc:{tr:"Taş evler ve panoramic manzara.",en:"Stone houses and panoramic views."}, img:"https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Mardin.jpg/640px-Mardin.jpg" },
-  { id:21, city:"mardin", cat:"historical", name:{tr:"Göbeklitepe",en:"Göbeklitepe"}, lat:37.2233, lng:38.9224, best:{tr:"İlkbahar",en:"Spring"}, tips:{tr:"Güneş koruyucu, su.",en:"Sunscreen, water."}, highlights:{tr:"Dünyanın en eski tapınağı",en:"World's oldest temple"}, budget:"low", desc:{tr:"Dünyanın en eski bilinen tapınağı. UNESCO.",en:"World's oldest known temple. UNESCO."}, img:"https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Gobekli_Tepe.jpg/640px-Gobekli_Tepe.jpg" },
-  { id:22, city:"fethiye", cat:"beach", name:{tr:"Ölüdeniz",en:"Ölüdeniz"}, lat:36.5494, lng:29.1239, best:{tr:"Yaz",en:"Summer"}, tips:{tr:"Yamaç paraşütü için rezervasyon.",en:"Book paragliding ahead."}, highlights:{tr:"Mavi lagün, yamaç paraşütü",en:"Blue lagoon, paragliding"}, budget:"mid", desc:{tr:"Mavi lagün ve yamaç paraşütü.",en:"Blue lagoon and paragliding."}, img:"https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/Oludeniz.jpg/640px-Oludeniz.jpg" },
-  { id:23, city:"fethiye", cat:"nature", name:{tr:"Kelebekler Vadisi",en:"Butterfly Valley"}, lat:36.4960, lng:29.1300, best:{tr:"Yaz",en:"Summer"}, tips:{tr:"Tekne ile ulaşım.",en:"Access by boat."}, highlights:{tr:"Vadi, plaj, kelebekler",en:"Valley, beach, butterflies"}, budget:"low", desc:{tr:"Vadi ve plaj, kelebekler.",en:"Valley, beach, butterflies."}, img:"https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Butterfly_Valley.jpg/640px-Butterfly_Valley.jpg" },
-  { id:24, city:"ankara", cat:"historical", name:{tr:"Anıtkabir",en:"Anıtkabir"}, lat:39.9255, lng:32.8369, best:{tr:"Tüm yıl",en:"All year"}, tips:{tr:"Saygı duruşu, sessiz olun.",en:"Respectful silence."}, highlights:{tr:"Atatürk'ün anıt mezarı",en:"Atatürk's mausoleum"}, budget:"low", desc:{tr:"Atatürk'ün anıt mezarı.",en:"Atatürk's mausoleum."}, img:"https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Anitkabir.jpg/640px-Anitkabir.jpg" },
-  { id:25, city:"konya", cat:"historical", name:{tr:"Mevlana Müzesi",en:"Mevlana Museum"}, lat:37.8710, lng:32.5040, best:{tr:"Tüm yıl",en:"All year"}, tips:{tr:"Sema törenleri kontrol edin.",en:"Check Sema ceremonies."}, highlights:{tr:"Mevlana türbesi, Sema",en:"Mevlana tomb, Sema"}, budget:"low", desc:{tr:"Mevlana türbesi ve müzesi.",en:"Mevlana tomb and museum."}, img:"https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Mevlana_Museum.jpg/640px-Mevlana_Museum.jpg" }
-];
-
-const cityNames = { tr: I18N.tr.cities, en: I18N.en.cities };
-const catNames = { tr: I18N.tr.cats, en: I18N.en.cats };
-
-let map, markers = [];
-
-function applyLang() {
-  document.documentElement.lang = lang;
-  document.getElementById("title").textContent = t("title");
-  document.getElementById("search").placeholder = t("search");
-  const citySel = document.getElementById("cityFilter");
-  citySel.options[0].text = t("allCities");
-  const catSel = document.getElementById("catFilter");
-  catSel.options[0].text = t("allCats");
-  document.getElementById("langBtn").textContent = lang === "tr" ? "EN" : "TR";
-  render();
-}
-
-function toggleLang() {
-  lang = lang === "tr" ? "en" : "tr";
-  localStorage.setItem("ttg_lang", lang);
-  localStorage.setItem("ttg_lang_set", "1");
-  applyLang();
-}
-
-function filteredPlaces() {
-  const q = document.getElementById("search").value.toLowerCase();
-  const city = document.getElementById("cityFilter").value;
-  const cat = document.getElementById("catFilter").value;
-  return PLACES.filter(p => {
-    const name = p.name[lang].toLowerCase();
-    if (q && !name.includes(q) && !p.desc[lang].toLowerCase().includes(q) && !p.highlights[lang].toLowerCase().includes(q)) return false;
-    if (city && p.city !== city) return false;
-    if (cat && p.cat !== cat) return false;
-    return true;
-  });
-}
-
-function renderCards(list) {
-  const cards = document.getElementById("cards");
-  cards.innerHTML = "";
-  if (list.length === 0) { cards.innerHTML = '<div class="empty">Sonuç bulunamadı / No results</div>'; return; }
-  list.forEach(p => {
-    const div = document.createElement("div");
-    div.className = "card";
-    div.innerHTML = `
-      <img src="${p.img}" alt="${p.name[lang]}" loading="lazy" onerror="this.style.display='none'" />
-      <div class="card-body">
-        <div class="card-title">${p.name[lang]}</div>
-        <div class="card-meta">${cityNames[lang][p.city]} · ${catNames[lang][p.cat]}</div>
-        <p class="card-desc">${p.desc[lang]}</p>
-        <div>
-          <span class="tag">${t("bestTime")}: ${p.best[lang]}</span>
-          <span class="budget ${p.budget}">${t("budget")}: ${I18N[lang].budgetLabels[p.budget]}</span>
+      <div class="color-row">
+        <div class="field">
+          <label for="primaryColor">Primary Color</label>
+          <input type="color" id="primaryColor" value="#38bdf8" />
         </div>
-        <button class="btn" style="margin-top:6px" onclick="showDetail(${p.id})">Detay</button>
-      </div>`;
-    cards.appendChild(div);
-  });
-}
+        <div class="field">
+          <label for="accentColor">Accent Color</label>
+          <input type="color" id="accentColor" value="#f59e0b" />
+        </div>
+      </div>
 
-function renderMap(list) {
-  if (!map) return;
-  markers.forEach(m => map.removeLayer(m));
-  markers = [];
-  const bounds = [];
-  list.forEach(p => {
-    const m = L.marker([p.lat, p.lng]).addTo(map);
-    m.bindPopup(`<b>${p.name[lang]}</b><br/>${p.desc[lang]}`);
-    m.on("click", () => showDetail(p.id));
-    markers.push(m);
-    bounds.push([p.lat, p.lng]);
-  });
-  if (bounds.length) map.fitBounds(bounds, { padding: [20,20], maxZoom: 11 });
-}
+      <div class="field">
+        <label for="animMode">Animation Frame Preview</label>
+        <select id="animMode">
+          <option value="idle">Idle</option>
+          <option value="walk">Walk</option>
+          <option value="bounce">Bounce</option>
+        </select>
+      </div>
 
-function render() {
-  const list = filteredPlaces();
-  renderCards(list);
-  renderMap(list);
-  renderChips();
-}
+      <div class="field">
+        <label for="transparentBg">
+          <input type="checkbox" id="transparentBg" checked /> Transparent PNG Background
+        </label>
+      </div>
 
-function renderChips() {
-  const chips = document.getElementById("chips");
-  chips.innerHTML = "";
-  const cats = ["historical","nature","beach","culture"];
-  cats.forEach(c => {
-    const b = document.createElement("button");
-    b.className = "chip";
-    b.textContent = catNames[lang][c];
-    b.onclick = () => {
-      const sel = document.getElementById("catFilter");
-      sel.value = sel.value === c ? "" : c;
-      render();
-    };
-    if (document.getElementById("catFilter").value === c) b.classList.add("active");
-    chips.appendChild(b);
-  });
-}
+      <div class="btn-row">
+        <button type="button" class="primary" id="generateBtn">Generate Asset (-1 Try)</button>
+        <button type="button" id="randomizeBtn">Randomize Seed</button>
+        <button type="button" class="success" id="downloadBtn">Download PNG</button>
+      </div>
 
-function showDetail(id) {
-  const p = PLACES.find(x => x.id === id);
-  if (!p) return;
-  const box = document.getElementById("detailBox");
-  box.innerHTML = `
-    <button class="close-btn" onclick="closeDetail()">×</button>
-    <img src="${p.img}" alt="${p.name[lang]}" onerror="this.style.display='none'" />
-    <div class="detail-title">${p.name[lang]}</div>
-    <div class="detail-row"><b>${t("coords")}:</b> ${p.lat}, ${p.lng}</div>
-    <div class="detail-row"><b>${t("bestTime")}:</b> ${p.best[lang]}</div>
-    <div class="detail-row"><b>${t("tips")}:</b> ${p.tips[lang]}</div>
-    <div class="detail-row"><b>${t("highlights")}:</b> ${p.highlights[lang]}</div>
-    <div class="detail-row"><b>${t("budget")}:</b> ${I18N[lang].budgetLabels[p.budget]}</div>
-    <p class="detail-row">${p.desc[lang]}</p>
-    <a class="btn" href="https://www.google.com/maps?q=${p.lat},${p.lng}" target="_blank">${t("openMaps")}</a>
-    <button class="btn secondary" onclick="closeDetail()">Kapat / Close</button>
-  `;
-  document.getElementById("detail").style.display = "flex";
-}
+      <div class="ad-slot" id="adsterra-inline-banner">
+        <!-- ADSTERRA_INLINE_BANNER -->
+        Adsterra Inline Banner Slot
+      </div>
+    </section>
 
-function closeDetail() { document.getElementById("detail").style.display = "none"; }
+    <section class="card">
+      <div class="preview-box">
+        <canvas id="spriteCanvas" width="24" height="24"></canvas>
+        <div class="frames-strip" id="framesStrip"></div>
+      </div>
+    </section>
+  </main>
 
-function populateFilters() {
-  const citySel = document.getElementById("cityFilter");
-  const cities = [...new Set(PLACES.map(p=>p.city))];
-  cities.forEach(c => {
-    const o = document.createElement("option");
-    o.value = c; o.textContent = I18N[lang].cities[c];
-    citySel.appendChild(o);
-  });
-  const catSel = document.getElementById("catFilter");
-  Object.keys(I18N[lang].cats).forEach(c => {
-    const o = document.createElement("option");
-    o.value = c; o.textContent = I18N[lang].cats[c];
-    catSel.appendChild(o);
-  });
-}
+  <!-- Watch Ad Modal -->
+  <div class="modal-backdrop" id="adModal">
+    <div class="modal">
+      <h3>Watch Ad for Free Tries</h3>
+      <p>Complete the short ad timer below to earn <strong>+2 generation tries</strong>.</p>
+      <div class="ad-slot" id="adsterra-reward-modal-slot">
+        <!-- ADSTERRA_REWARD_SCRIPT -->
+        Adsterra Reward Ad Slot
+      </div>
+      <div id="adCountdownText">Please wait 5 seconds...</div>
+      <div class="btn-row">
+        <button type="button" class="success" id="claimAdRewardBtn" disabled>Claim +2 Tries</button>
+        <button type="button" data-close="adModal">Close</button>
+      </div>
+    </div>
+  </div>
 
-document.getElementById("search").addEventListener("input", render);
-document.getElementById("cityFilter").addEventListener("change", render);
-document.getElementById("catFilter").addEventListener("change", render);
-document.getElementById("detail").addEventListener("click", (e) => { if (e.target.id === "detail") closeDetail(); });
+  <!-- Buy Tries Modal (2 USDT on BNB Chain) -->
+  <div class="modal-backdrop" id="buyModal">
+    <div class="modal">
+      <h3>Buy 50 Tries — 2 USDT (BNB Chain)</h3>
+      <p>Send exactly <strong>2 USDT</strong> on <strong>BNB Smart Chain (BEP-20)</strong> to:</p>
+      <div class="wallet-box" id="bnbAddress">0xfC8Ee7fa923Dee117e0372feA1DE74d77974B182</div>
+      <button type="button" id="copyAddrBtn">Copy BNB Chain Address</button>
+      <p class="warn">Warning: Send only USDT via BNB Smart Chain (BEP-20). Sending on other networks may cause loss of funds.</p>
+      <div class="field" style="margin-top:12px;">
+        <label for="txHashInput">Transaction Hash (0x...)</label>
+        <input type="text" id="txHashInput" placeholder="0x..." />
+      </div>
+      <div class="btn-row">
+        <button type="button" class="primary" id="confirmPaymentBtn">Submit &amp; Add +50 Tries</button>
+        <button type="button" data-close="buyModal">Close</button>
+      </div>
+      <div class="status-msg" id="buyStatusMsg"></div>
+    </div>
+  </div>
 
-populateFilters();
-applyLang();
-map = L.map("map").setView([39,35], 6);
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: "&copy; OpenStreetMap" }).addTo(map);
-render();
+  <script>
+    const STORAGE_KEY = "game_sprite_gen_tries_v1";
+    const RECEIVER_ADDR = "0xfC8Ee7fa923Dee117e0372feA1DE74d77974B182";
+    let tries = Number(localStorage.getItem(STORAGE_KEY));
+    if (Number.isNaN(tries)) tries = 5;
+    let seed = Math.floor(Math.random() * 100000);
+    let animPhase = 0;
 
-if (!navigator.onLine) {
-  const b = document.getElementById("offlineBanner");
-  b.textContent = t("offline");
-  b.style.display = "block";
-}
-</script>
+    const triesCountEl = document.getElementById("triesCount");
+    const spriteCanvas = document.getElementById("spriteCanvas");
+    const ctx = spriteCanvas.getContext("2d");
+    const framesStrip = document.getElementById("framesStrip");
+
+    function saveTries(val) {
+      tries = Math.max(0, val);
+      localStorage.setItem(STORAGE_KEY, String(tries));
+      triesCountEl.textContent = String(tries);
+    }
+
+    function seededRand(n) {
+      const x = Math.sin(n * 9301 + seed * 49297) * 233280;
+      return x - Math.floor(x);
+    }
+
+    function drawFrame(targetCanvas, frameOffset) {
+      const size = Number(document.getElementById("gridSize").value);
+      targetCanvas.width = size;
+      targetCanvas.height = size;
+      const tctx = targetCanvas.getContext("2d");
+      tctx.clearRect(0, 0, size, size);
+
+      if (!document.getElementById("transparentBg").checked) {
+        tctx.fillStyle = "#161b22";
+        tctx.fillRect(0, 0, size, size);
+      }
+
+      const mode = document.getElementById("assetMode").value;
+      const theme = document.getElementById("styleTheme").value;
+      const animMode = document.getElementById("animMode").value;
+      const primary = document.getElementById("primaryColor").value;
+      const accent = document.getElementById("accentColor").value;
+
+      let dy = 0;
+      if (animMode === "bounce") dy = Math.round(Math.sin(frameOffset * 1.6) * 2);
+      if (animMode === "walk") dy = (frameOffset % 2 === 0) ? 0 : -1;
+
+      const half = Math.floor(size / 2);
+      const pad = Math.max(2, Math.floor(size * 0.18));
+
+      for (let y = pad; y < size - pad; y++) {
+        for (let x = pad; x <= half; x++) {
+          const r = seededRand(x * 131 + y * 977 + frameOffset * 313);
+          const mirrorX = size - 1 - x;
+          let drawCell = false;
+
+          if (mode === "tile") {
+            drawCell = r > 0.35 || x === pad || y === pad || y === size - pad - 1;
+          } else if (mode === "collectible") {
+            const cx = size / 2 - 0.5;
+            const cy = size / 2 - 0.5 + dy;
+            const dist = Math.hypot(x - cx, y - cy);
+            drawCell = dist < size * 0.32 && r > 0.15;
+          } else if (mode === "icon") {
+            const box = Math.abs(x - half) + Math.abs(y - half + dy);
+            drawCell = box < size * 0.38 && r > 0.25;
+          } else {
+            drawCell = r > 0.45;
+          }
+
+          if (drawCell) {
+            const useAccent = r > 0.78 || (mode === "character" && y < pad + 3 && x > half - 2);
+            tctx.fillStyle = useAccent ? accent : primary;
+            if (theme === "neon") {
+              tctx.shadowColor = useAccent ? accent : primary;
+              tctx.shadowBlur = 4;
+            } else {
+              tctx.shadowBlur = 0;
+            }
+            const py = Math.min(size - 1, Math.max(0, y + dy));
+            tctx.fillRect(x, py, 1, 1);
+            tctx.fillRect(mirrorX, py, 1, 1);
+          }
+        }
+      }
+      tctx.shadowBlur = 0;
+    }
+
+    function renderAllFrames() {
+      drawFrame(spriteCanvas, animPhase);
+      framesStrip.innerHTML = "";
+      for (let i = 0; i < 4; i++) {
+        const fc = document.createElement("canvas");
+        drawFrame(fc, i);
+        framesStrip.appendChild(fc);
+      }
+    }
+
+    function openModal(id) {
+      document.getElementById(id).classList.add("open");
+    }
+    function closeModal(id) {
+      document.getElementById(id).classList.remove("open");
+    }
+
+    document.querySelectorAll("[data-close]").forEach(btn => {
+      btn.addEventListener("click", () => closeModal(btn.dataset.close));
+    });
+
+    document.getElementById("generateBtn").addEventListener("click", () => {
+      if (tries <= 0) {
+        openModal("buyModal");
+        return;
+      }
+      saveTries(tries - 1);
+      seed = Math.floor(Math.random() * 100000);
+      animPhase = (animPhase + 1) % 4;
+      renderAllFrames();
+    });
+
+    document.getElementById("randomizeBtn").addEventListener("click", () => {
+      if (tries <= 0) {
+        openModal("buyModal");
+        return;
+      }
+      saveTries(tries - 1);
+      seed = Math.floor(Math.random() * 100000);
+      document.getElementById("primaryColor").value = "#" + Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, "0");
+      document.getElementById("accentColor").value = "#" + Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, "0");
+      renderAllFrames();
+    });
+
+    document.getElementById("downloadBtn").addEventListener("click", () => {
+      const link = document.createElement("a");
+      link.download = `sprite-${seed}.png`;
+      link.href = spriteCanvas.toDataURL("image/png");
+      link.click();
+    });
+
+    ["assetMode", "styleTheme", "gridSize", "primaryColor", "accentColor", "animMode", "transparentBg"].forEach(id => {
+      document.getElementById(id).addEventListener("change", renderAllFrames);
+    });
+
+    let adTimer = null;
+    document.getElementById("openAdModalBtn").addEventListener("click", () => {
+      openModal("adModal");
+      let sec = 5;
+      const claimBtn = document.getElementById("claimAdRewardBtn");
+      const textEl = document.getElementById("adCountdownText");
+      claimBtn.disabled = true;
+      textEl.textContent = `Please wait ${sec} seconds...`;
+      clearInterval(adTimer);
+      adTimer = setInterval(() => {
+        sec--;
+        if (sec > 0) {
+          textEl.textContent = `Please wait ${sec} seconds...`;
+        } else {
+          clearInterval(adTimer);
+          textEl.textContent = "Ad complete! You can claim your free tries.";
+          claimBtn.disabled = false;
+        }
+      }, 1000);
+    });
+
+    document.getElementById("claimAdRewardBtn").addEventListener("click", () => {
+      saveTries(tries + 2);
+      closeModal("adModal");
+    });
+
+    document.getElementById("openBuyModalBtn").addEventListener("click", () => {
+      document.getElementById("buyStatusMsg").textContent = "";
+      openModal("buyModal");
+    });
+
+    document.getElementById("copyAddrBtn").addEventListener("click", () => {
+      navigator.clipboard.writeText(RECEIVER_ADDR);
+      document.getElementById("buyStatusMsg").textContent = "BNB Chain address copied.";
+    });
+
+    document.getElementById("confirmPaymentBtn").addEventListener("click", () => {
+      const tx = document.getElementById("txHashInput").value.trim();
+      if (!tx.startsWith("0x") || tx.length < 10) {
+        document.getElementById("buyStatusMsg").textContent = "Enter a valid transaction hash starting with 0x.";
+        return;
+      }
+      saveTries(tries + 50);
+      document.getElementById("txHashInput").value = "";
+      document.getElementById("buyStatusMsg").textContent = "Added +50 tries for tx " + tx.slice(0, 12) + "...";
+    });
+
+    saveTries(tries);
+    renderAllFrames();
+  </script>
 </body>
 </html>
